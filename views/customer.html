@@ -44,6 +44,7 @@
             font-weight: bold;
             background: linear-gradient(45deg, #667eea, #764ba2);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
@@ -81,6 +82,7 @@
             margin-bottom: 10px;
             background: linear-gradient(45deg, #667eea, #764ba2);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
@@ -255,8 +257,12 @@
         </header>
 
         <div class="welcome-section">
-            <h1>Customer Portal</h1>
-            <p>Welcome to your personalized support dashboard</p>
+            <h1>Welcome back, <span id="customer-name">Valued Customer</span>!</h1>
+            <p>Manage your support tickets and get help from our amazing team.</p>
+            <div style="margin-top: 15px;">
+                <button class="btn" onclick="showTicketForm()">Create New Ticket</button>
+                <button class="btn" onclick="logout()" style="background: #dc3545; margin-left: 10px;">Logout</button>
+            </div>
         </div>
 
         <div class="dashboard-grid">
@@ -297,10 +303,6 @@
         <div class="ticket-form" id="ticket-form" style="display: none;">
             <h3>Create New Support Ticket</h3>
             <form id="new-ticket-form">
-                <div class="form-group">
-                    <label for="customerEmail">Your Email</label>
-                    <input type="email" id="customerEmail" name="customerEmail" value="john.doe@example.com" required>
-                </div>
                 <div class="form-group">
                     <label for="subject">Subject</label>
                     <input type="text" id="subject" name="subject" required>
@@ -367,9 +369,16 @@
 
         async function loadTickets() {
             try {
-                // Get email from the form or use default for demonstration
-                const emailField = document.getElementById('customerEmail');
-                const customerEmail = emailField ? emailField.value : 'john.doe@example.com';
+                // Get current user's email from session
+                const sessionResponse = await fetch('/api/session/me');
+                const sessionResult = await sessionResponse.json();
+                
+                if (!sessionResult.success || sessionResult.userType !== 'customer') {
+                    console.error('User not authenticated');
+                    return;
+                }
+                
+                const customerEmail = sessionResult.user.email;
                 
                 const response = await fetch(`/api/tickets?customerEmail=${encodeURIComponent(customerEmail)}`);
                 if (response.ok) {
@@ -423,9 +432,18 @@
         document.getElementById('new-ticket-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            // Get current user's email from session
+            const sessionResponse = await fetch('/api/session/me');
+            const sessionResult = await sessionResponse.json();
+            
+            if (!sessionResult.success || sessionResult.userType !== 'customer') {
+                alert('Authentication error. Please login again.');
+                return;
+            }
+            
             const formData = new FormData(e.target);
             const ticketData = {
-                customerEmail: formData.get('customerEmail'),
+                customerEmail: sessionResult.user.email,
                 subject: formData.get('subject'),
                 priority: formData.get('priority'),
                 category: formData.get('category'),
@@ -462,6 +480,47 @@
 
         // Initialize
         loadTickets();
+        loadUserInfo();
+
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/session/me');
+                const result = await response.json();
+                
+                if (result.success && result.userType === 'customer') {
+                    const user = result.user;
+                    document.getElementById('customer-name').textContent = `${user.firstName} ${user.lastName}`;
+                } else {
+                    document.getElementById('customer-name').textContent = 'Valued Customer';
+                }
+            } catch (error) {
+                console.error('Error loading user info:', error);
+                document.getElementById('customer-name').textContent = 'Valued Customer';
+            }
+        }
+
+        async function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                try {
+                    const response = await fetch('/auth/customer/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        window.location.href = result.redirectUrl;
+                    } else {
+                        alert('Error logging out: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    alert('Error logging out. Please try again.');
+                }
+            }
+        }
     </script>
 </body>
 </html>

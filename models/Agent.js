@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const agentSchema = new mongoose.Schema({
     firstName: {
@@ -17,6 +18,11 @@ const agentSchema = new mongoose.Schema({
         unique: true,
         lowercase: true,
         trim: true
+    },
+    password: {
+        type: String,
+        required: true,
+        minlength: 6
     },
     employeeId: {
         type: String,
@@ -104,6 +110,24 @@ agentSchema.methods.updatePerformance = function(responseTime, rating = null) {
     
     return this.save();
 };
+
+// Authentication methods
+agentSchema.methods.comparePassword = async function(candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// Hash password before saving
+agentSchema.pre('save', async function(next) {
+    if (!this.isModified('password')) return next();
+    
+    try {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
 
 // Index for efficient searching
 agentSchema.index({ email: 1 });

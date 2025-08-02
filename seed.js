@@ -11,6 +11,7 @@ const sampleCustomers = [
         firstName: 'John',
         lastName: 'Doe',
         email: 'john.doe@email.com',
+        password: 'password123',
         phone: '+1-555-0101',
         company: 'Tech Solutions Inc',
         customerType: 'business'
@@ -19,6 +20,7 @@ const sampleCustomers = [
         firstName: 'Sarah',
         lastName: 'Smith',
         email: 'sarah.smith@email.com',
+        password: 'password123',
         phone: '+1-555-0102',
         company: 'Marketing Pro',
         customerType: 'business'
@@ -27,6 +29,7 @@ const sampleCustomers = [
         firstName: 'Mike',
         lastName: 'Wilson',
         email: 'mike.wilson@email.com',
+        password: 'password123',
         phone: '+1-555-0103',
         customerType: 'individual'
     },
@@ -52,6 +55,7 @@ const sampleAgents = [
         firstName: 'Sarah',
         lastName: 'Johnson',
         email: 'sarah.johnson@company.com',
+        password: 'password123',
         employeeId: 'AGT001',
         department: 'technical',
         rating: 3,
@@ -63,6 +67,7 @@ const sampleAgents = [
         firstName: 'David',
         lastName: 'Chen',
         email: 'david.chen@company.com',
+        password: 'password123',
         employeeId: 'AGT002',
         department: 'billing',
         rating: 2,
@@ -74,6 +79,7 @@ const sampleAgents = [
         firstName: 'Emily',
         lastName: 'Rodriguez',
         email: 'emily.rodriguez@company.com',
+        password: 'password123',
         employeeId: 'AGT003',
         department: 'general',
         rating: 1,
@@ -102,12 +108,22 @@ async function seedDatabase() {
         
         console.log('Cleared existing data');
 
-        // Create customers
-        const customers = await Customer.insertMany(sampleCustomers);
+        // Create customers (one by one to trigger password hashing)
+        const customers = [];
+        for (const customerData of sampleCustomers) {
+            const customer = new Customer(customerData);
+            await customer.save();
+            customers.push(customer);
+        }
         console.log(`Created ${customers.length} customers`);
 
-        // Create agents
-        const agents = await Agent.insertMany(sampleAgents);
+        // Create agents (one by one to trigger password hashing)
+        const agents = [];
+        for (const agentData of sampleAgents) {
+            const agent = new Agent(agentData);
+            await agent.save();
+            agents.push(agent);
+        }
         console.log(`Created ${agents.length} agents`);
 
         // Create sample tickets

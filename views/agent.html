@@ -44,6 +44,7 @@
             font-weight: bold;
             background: linear-gradient(45deg, #2c3e50, #34495e);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
@@ -321,11 +322,12 @@
 
         <div class="agent-info">
             <div class="agent-details">
-                <h2>Welcome, Agent Sarah Johnson</h2>
-                <p>Support Agent • Rating 3 • Since 2023</p>
+                <h2>Welcome, <span id="agent-name">Agent</span></h2>
+                <p id="agent-details">Support Agent • Rating 3 • Since 2023</p>
             </div>
             <div class="status-badge">
                 🟢 Online
+                <button onclick="logout()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 5px; margin-left: 10px; cursor: pointer;">Logout</button>
             </div>
         </div>
 
@@ -434,7 +436,7 @@
 
                 <div class="sidebar-card">
                     <h3>Team Status</h3>
-                    <div style="space-y: 10px;">
+                    <div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                             <span>🟢 Online Agents</span>
                             <strong>8</strong>
@@ -517,6 +519,7 @@ Created: ${new Date(ticket.createdAt).toLocaleString()}
         document.addEventListener('DOMContentLoaded', function() {
             // Load initial data
             refreshTickets();
+            loadUserInfo();
             
             // Auto-refresh every 30 seconds
             setInterval(() => {
@@ -525,6 +528,47 @@ Created: ${new Date(ticket.createdAt).toLocaleString()}
                 }
             }, 30000);
         });
+
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/session/me');
+                const result = await response.json();
+                
+                if (result.success && result.userType === 'agent') {
+                    const user = result.user;
+                    document.getElementById('agent-name').textContent = `${user.firstName} ${user.lastName}`;
+                    document.getElementById('agent-details').textContent = `${user.department} • ID: ${user.employeeId} • Since 2023`;
+                } else {
+                    document.getElementById('agent-name').textContent = 'Agent';
+                    document.getElementById('agent-details').textContent = 'Support Agent • Since 2023';
+                }
+            } catch (error) {
+                console.error('Error loading user info:', error);
+            }
+        }
+
+        async function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                try {
+                    const response = await fetch('/auth/agent/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        window.location.href = result.redirectUrl;
+                    } else {
+                        alert('Error logging out: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    alert('Error logging out. Please try again.');
+                }
+            }
+        }
 
         function refreshTickets() {
             console.log('Refreshing tickets...');

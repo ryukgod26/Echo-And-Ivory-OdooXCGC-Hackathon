@@ -13,10 +13,10 @@
             <h1 class="logo">Echo and Ivory</h1>
             <nav>
                 <a href="/" class="nav-link">Home</a>
-                <a href="/customer" class="nav-link">Customer Portal</a>
-                <a href="/support_agent" class="nav-link">Agent Portal</a>
-                <a href="#" class="btn btn-login">Login</a>
-                <a href="#" class="btn btn-signup">Sign Up</a>
+                <a href="/auth/customer/login" class="nav-link">Customer Portal</a>
+                <a href="/auth/agent/login" class="nav-link">Agent Portal</a>
+                <a href="/auth/customer/login" class="btn btn-login">Customer Login</a>
+                <a href="/auth/agent/login" class="btn btn-signup">Agent Login</a>
             </nav>
         </div>
     </header>
@@ -31,12 +31,14 @@
             <div class="feature-card">
                 <h3>Customer Portal</h3>
                 <p>Submit tickets, track progress, and get support</p>
-                <a href="/customer" class="btn btn-primary">Access Portal</a>
+                <a href="/auth/customer/login" class="btn btn-primary">Customer Login</a>
+                <a href="/auth/customer/signup" class="btn btn-primary" style="margin-left: 10px; background: #28a745;">Sign Up</a>
             </div>
             <div class="feature-card">
                 <h3>Agent Dashboard</h3>
                 <p>Manage tickets, respond to customers, and track metrics</p>
-                <a href="/support_agent" class="btn btn-primary">Agent Login</a>
+                <a href="/auth/agent/login" class="btn btn-primary">Agent Login</a>
+                <a href="/auth/agent/signup" class="btn btn-primary" style="margin-left: 10px; background: #28a745;">Register</a>
             </div>
         </section>
         

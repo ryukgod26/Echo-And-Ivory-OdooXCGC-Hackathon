@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const customerSchema = new mongoose.Schema({
     firstName: {
@@ -17,6 +18,11 @@ const customerSchema = new mongoose.Schema({
         unique: true,
         lowercase: true,
         trim: true
+    },
+    password: {
+        type: String,
+        required: true,
+        minlength: 6
     },
     phone: {
         type: String,
@@ -69,6 +75,24 @@ const customerSchema = new mongoose.Schema({
 // Virtual for full name
 customerSchema.virtual('fullName').get(function() {
     return `${this.firstName} ${this.lastName}`;
+});
+
+// Authentication methods
+customerSchema.methods.comparePassword = async function(candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// Hash password before saving
+customerSchema.pre('save', async function(next) {
+    if (!this.isModified('password')) return next();
+    
+    try {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+        next();
+    } catch (error) {
+        next(error);
+    }
 });
 
 // Index for efficient searching
