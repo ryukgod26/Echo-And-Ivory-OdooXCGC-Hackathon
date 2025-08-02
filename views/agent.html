@@ -44,6 +44,7 @@
             font-weight: bold;
             background: linear-gradient(45deg, #2c3e50, #34495e);
             -webkit-background-clip: text;
+            -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -436,18 +437,28 @@
 
                 <div class="sidebar-card">
                     <h3>Team Status</h3>
-                    <div>
+                    <div id="team-status-container">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                             <span>🟢 Online Agents</span>
-                            <strong>8</strong>
+                            <strong id="online-agents">-</strong>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                             <span>🟡 Away</span>
-                            <strong>3</strong>
+                            <strong id="away-agents">-</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>🔵 Busy</span>
+                            <strong id="busy-agents">-</strong>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>🔴 Offline</span>
-                            <strong>2</strong>
+                            <strong id="offline-agents">-</strong>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
+                        <div style="display: flex; justify-content: space-between; font-weight: bold;">
+                            <span>Total Team Members</span>
+                            <strong id="total-agents">-</strong>
                         </div>
                     </div>
                 </div>
@@ -520,11 +531,13 @@ Created: ${new Date(ticket.createdAt).toLocaleString()}
             // Load initial data
             refreshTickets();
             loadUserInfo();
+            updateTeamStatus();
             
             // Auto-refresh every 30 seconds
             setInterval(() => {
                 if (document.visibilityState === 'visible') {
                     updateDashboardMetrics();
+                    updateTeamStatus();
                 }
             }, 30000);
         });
@@ -672,6 +685,25 @@ Created: ${new Date(ticket.createdAt).toLocaleString()}
                 })
                 .catch(error => {
                     console.error('Error fetching dashboard stats:', error);
+                });
+        }
+
+        function updateTeamStatus() {
+            // Fetch team status statistics
+            fetch('/api/tickets/stats/team')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const teamStatus = data.teamStatus;
+                        document.getElementById('online-agents').textContent = teamStatus.online;
+                        document.getElementById('away-agents').textContent = teamStatus.away;
+                        document.getElementById('busy-agents').textContent = teamStatus.busy;
+                        document.getElementById('offline-agents').textContent = teamStatus.offline;
+                        document.getElementById('total-agents').textContent = teamStatus.total;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching team status:', error);
                 });
         }
 

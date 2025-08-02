@@ -43,8 +43,8 @@ app.use('/auth', authRouter);
 
 // Use routers with authentication middleware
 app.use('/', homeRouter);
-app.use('/', authRouter.requireCustomerAuth, customerRouter);
-app.use('/', authRouter.requireAgentAuth, agentRouter);
+app.use('/customer', authRouter.requireCustomerAuth, customerRouter);
+app.use('/support_agent', authRouter.requireAgentAuth, agentRouter);
 
 // API routes
 app.use('/api/tickets', ticketsAPI);

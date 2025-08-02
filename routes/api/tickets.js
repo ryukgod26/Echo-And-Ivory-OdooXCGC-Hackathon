@@ -311,4 +311,50 @@ router.get('/stats/dashboard', async (req, res) => {
     }
 });
 
+// GET /api/tickets/stats/team - Get team status statistics
+router.get('/stats/team', async (req, res) => {
+    try {
+        // Get agent counts by status
+        const [onlineCount, awayCount, busyCount, offlineCount, totalAgents] = await Promise.all([
+            Agent.countDocuments({ status: 'online' }),
+            Agent.countDocuments({ status: 'away' }),
+            Agent.countDocuments({ status: 'busy' }),
+            Agent.countDocuments({ status: 'offline' }),
+            Agent.countDocuments({})
+        ]);
+
+        // Get detailed agent information
+        const agents = await Agent.find({}, 'firstName lastName status department lastActivity')
+            .sort({ status: 1, lastName: 1 });
+
+        // Group agents by status
+        const agentsByStatus = {
+            online: agents.filter(agent => agent.status === 'online'),
+            away: agents.filter(agent => agent.status === 'away'),
+            busy: agents.filter(agent => agent.status === 'busy'),
+            offline: agents.filter(agent => agent.status === 'offline')
+        };
+
+        res.json({
+            success: true,
+            teamStatus: {
+                online: onlineCount,
+                away: awayCount,
+                busy: busyCount,
+                offline: offlineCount,
+                total: totalAgents
+            },
+            agents: agentsByStatus
+        });
+
+    } catch (error) {
+        console.error('Error fetching team status:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching team status',
+            error: error.message
+        });
+    }
+});
+
 module.exports = router;
