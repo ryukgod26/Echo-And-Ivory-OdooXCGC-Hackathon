@@ -9,8 +9,13 @@ const path = require('path');
 const homeRouter = require('./routes/homeRouter');
 const customerRouter = require('./routes/customerRouter');
 const agentRouter = require('./routes/agentRouter');
+const ticketsAPI = require('./routes/api/tickets');
 
 dotenv.config();
+
+// Middleware for parsing JSON and URL-encoded data
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static(path.join(__dirname,"public")));
 
@@ -18,6 +23,9 @@ app.use(express.static(path.join(__dirname,"public")));
 app.use('/', homeRouter);
 app.use('/', customerRouter);
 app.use('/', agentRouter);
+
+// API routes
+app.use('/api/tickets', ticketsAPI);
 
  mongoose.connect(process.env.MONGO_URI_KEY,{
 

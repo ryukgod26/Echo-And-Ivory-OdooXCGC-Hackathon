@@ -322,7 +322,7 @@
         <div class="agent-info">
             <div class="agent-details">
                 <h2>Welcome, Agent Sarah Johnson</h2>
-                <p>Support Agent • Level 3 • Since 2023</p>
+                <p>Support Agent • Rating 3 • Since 2023</p>
             </div>
             <div class="status-badge">
                 🟢 Online
@@ -454,11 +454,8 @@
     </div>
 
     <script>
-        let tickets = [
-            { id: 1, subject: "Cannot access account after password reset", priority: "urgent", customer: "john.doe@email.com", status: "open" },
-            { id: 2, subject: "Billing discrepancy on monthly invoice", priority: "high", customer: "sarah.smith@email.com", status: "in-progress" },
-            { id: 3, subject: "Feature request: Dark mode support", priority: "medium", customer: "mike.wilson@email.com", status: "open" }
-        ];
+        let tickets = [];
+        let currentFilter = 'all';
 
         function filterTickets(filter) {
             // Remove active class from all tabs
@@ -467,25 +464,171 @@
             // Add active class to clicked tab
             event.target.classList.add('active');
             
-            // Filter logic would go here
-            console.log('Filtering tickets by:', filter);
+            currentFilter = filter;
+            
+            let filteredTickets = tickets;
+            
+            // Apply filter
+            switch(filter) {
+                case 'urgent':
+                    filteredTickets = tickets.filter(ticket => ticket.priority === 'urgent');
+                    break;
+                case 'high':
+                    filteredTickets = tickets.filter(ticket => ticket.priority === 'high');
+                    break;
+                case 'unassigned':
+                    filteredTickets = tickets.filter(ticket => !ticket.assignedAgent);
+                    break;
+                case 'all':
+                default:
+                    filteredTickets = tickets;
+                    break;
+            }
+            
+            // Re-render the ticket list with filtered tickets
+            renderTicketList(filteredTickets);
+            
+            console.log(`Filtering tickets by: ${filter}, showing ${filteredTickets.length} tickets`);
         }
 
         function selectTicket(ticketId) {
             console.log('Selected ticket:', ticketId);
             // Here you would typically open a ticket detail modal or navigate to ticket details
-            alert(`Opening ticket #T00${ticketId} details...`);
+            
+            // Find the ticket in our data
+            const ticket = tickets.find(t => t.id === ticketId);
+            if (ticket) {
+                const details = `
+Ticket: ${ticket.ticketId}
+Subject: ${ticket.subject}
+Status: ${ticket.status}
+Priority: ${ticket.priority}
+Customer: ${ticket.customer ? ticket.customer.name + ' (' + ticket.customer.email + ')' : 'Unknown'}
+Agent: ${ticket.assignedAgent ? ticket.assignedAgent.name : 'Unassigned'}
+Created: ${new Date(ticket.createdAt).toLocaleString()}
+                `;
+                alert(details);
+            } else {
+                alert(`Opening ticket ${ticketId} details...`);
+            }
         }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load initial data
+            refreshTickets();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(() => {
+                if (document.visibilityState === 'visible') {
+                    updateDashboardMetrics();
+                }
+            }, 30000);
+        });
 
         function refreshTickets() {
             console.log('Refreshing tickets...');
-            // Simulate refresh
             const btn = event.target;
+            const originalText = btn.textContent;
             btn.textContent = '🔄 Refreshing...';
-            setTimeout(() => {
-                btn.textContent = '🔄 Refresh';
-                alert('Tickets refreshed!');
-            }, 1000);
+            btn.disabled = true;
+
+            // Fetch tickets from database
+            fetch('/api/tickets?limit=20&sortBy=createdAt&sortOrder=desc')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update the tickets array
+                        tickets = data.tickets;
+                        
+                        // Re-render the ticket list
+                        renderTicketList(tickets);
+                        
+                        // Update dashboard metrics
+                        updateDashboardMetrics();
+                        
+                        console.log(`Loaded ${tickets.length} tickets from database`);
+                    } else {
+                        console.error('Error fetching tickets:', data.message);
+                        alert('Error refreshing tickets: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Network error:', error);
+                    alert('Network error while refreshing tickets. Please check your connection.');
+                })
+                .finally(() => {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                });
+        }
+
+        function renderTicketList(ticketArray) {
+            const ticketListContainer = document.getElementById('ticket-list');
+            ticketListContainer.innerHTML = '';
+
+            if (ticketArray.length === 0) {
+                ticketListContainer.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No tickets found.</p>';
+                return;
+            }
+
+            ticketArray.forEach(ticket => {
+                const ticketElement = document.createElement('div');
+                ticketElement.classList.add('ticket-item');
+                ticketElement.onclick = () => selectTicket(ticket.id);
+
+                const priorityClass = ticket.priority.toLowerCase();
+                const statusText = ticket.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                
+                // Calculate time ago
+                const timeAgo = formatTimeAgo(new Date(ticket.createdAt));
+                const lastUpdate = formatTimeAgo(new Date(ticket.lastUpdated));
+
+                ticketElement.innerHTML = `
+                    <div class="ticket-header">
+                        <div>
+                            <h4>${ticket.subject}</h4>
+                            <small>Customer: ${ticket.customer ? ticket.customer.email : 'Unknown'} • ID: ${ticket.ticketId}</small>
+                        </div>
+                        <span class="priority ${priorityClass}">${ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1)}</span>
+                    </div>
+                    <p>${ticket.description.length > 150 ? ticket.description.substring(0, 150) + '...' : ticket.description}</p>
+                    <div class="customer-info">
+                        <strong>Created:</strong> ${timeAgo} • <strong>Last Update:</strong> ${lastUpdate} • <strong>Status:</strong> ${statusText}
+                        ${ticket.assignedAgent ? `• <strong>Agent:</strong> ${ticket.assignedAgent.name}` : '• <strong>Unassigned</strong>'}
+                    </div>
+                `;
+
+                ticketListContainer.appendChild(ticketElement);
+            });
+        }
+
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const diffInSeconds = Math.floor((now - date) / 1000);
+            
+            if (diffInSeconds < 60) return 'Just now';
+            if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+            if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+            return `${Math.floor(diffInSeconds / 86400)} days ago`;
+        }
+
+        function updateDashboardMetrics() {
+            // Fetch dashboard statistics
+            fetch('/api/tickets/stats/dashboard')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const stats = data.stats;
+                        document.getElementById('pending-tickets').textContent = stats.pendingTickets;
+                        document.getElementById('in-progress-tickets').textContent = stats.inProgressTickets;
+                        document.getElementById('resolved-today').textContent = stats.resolvedToday;
+                        document.getElementById('avg-response').textContent = stats.avgResponseTime;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching dashboard stats:', error);
+                });
         }
 
         function createTicket() {
@@ -503,16 +646,6 @@
         function viewKnowledgeBase() {
             alert('Opening knowledge base...');
         }
-
-        // Simulate real-time updates
-        setInterval(() => {
-            const pendingCount = document.getElementById('pending-tickets');
-            const currentCount = parseInt(pendingCount.textContent);
-            // Randomly update pending tickets (for demo purposes)
-            if (Math.random() > 0.7) {
-                pendingCount.textContent = Math.max(0, currentCount + (Math.random() > 0.5 ? 1 : -1));
-            }
-        }, 10000);
     </script>
 </body>
 </html>
