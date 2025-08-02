@@ -130,8 +130,6 @@ agentSchema.pre('save', async function(next) {
 });
 
 // Index for efficient searching
-agentSchema.index({ email: 1 });
-agentSchema.index({ employeeId: 1 });
 agentSchema.index({ department: 1, status: 1 });
 
 module.exports = mongoose.model('Agent', agentSchema);

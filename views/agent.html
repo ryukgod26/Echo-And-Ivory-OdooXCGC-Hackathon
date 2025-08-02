@@ -279,6 +279,172 @@
             margin-top: 10px;
         }
 
+        /* Reply Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .modal-header h2 {
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #2c3e50;
+        }
+
+        .ticket-details {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .ticket-details h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #2c3e50;
+        }
+
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group select:focus {
+            outline: none;
+            border-color: #2c3e50;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .btn-reply {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-reply:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel:hover {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+        }
+
+        .reply-button {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .reply-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+
         @media (max-width: 1024px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -415,7 +581,6 @@
                 <div class="sidebar-card">
                     <h3>Quick Actions</h3>
                     <div class="quick-actions">
-                        <button class="btn" onclick="createTicket()">➕ Create Ticket</button>
                         <button class="btn secondary" onclick="viewReports()">📊 View Reports</button>
                         <button class="btn secondary" onclick="manageCustomers()">👥 Manage Customers</button>
                         <button class="btn secondary" onclick="viewKnowledgeBase()">📚 Knowledge Base</button>
@@ -466,6 +631,42 @@
         </div>
     </div>
 
+    <!-- Reply Modal -->
+    <div id="replyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Reply to Ticket</h2>
+                <span class="close" onclick="closeReplyModal()">&times;</span>
+            </div>
+            
+            <div class="ticket-details" id="modalTicketDetails">
+                <!-- Ticket details will be populated here -->
+            </div>
+            
+            <form id="replyForm">
+                <div class="form-group">
+                    <label for="replyMessage">Your Reply:</label>
+                    <textarea id="replyMessage" name="replyMessage" placeholder="Type your reply to the customer here..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ticketStatus">Update Ticket Status:</label>
+                    <select id="ticketStatus" name="ticketStatus" required>
+                        <option value="in-progress">In Progress</option>
+                        <option value="pending-customer">Pending Customer Response</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeReplyModal()">Cancel</button>
+                    <button type="submit" class="btn-reply">Send Reply</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         let tickets = [];
         let currentFilter = 'all';
@@ -474,8 +675,21 @@
             // Remove active class from all tabs
             document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
             
-            // Add active class to clicked tab
-            event.target.classList.add('active');
+            // Add active class to clicked tab - handle case where event might not exist
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                // Find the tab button that matches the filter and make it active
+                const tabs = document.querySelectorAll('.filter-tab');
+                tabs.forEach(tab => {
+                    if ((filter === 'all' && tab.textContent === 'All') ||
+                        (filter === 'urgent' && tab.textContent === 'Urgent') ||
+                        (filter === 'high' && tab.textContent === 'High Priority') ||
+                        (filter === 'unassigned' && tab.textContent === 'Unassigned')) {
+                        tab.classList.add('active');
+                    }
+                });
+            }
             
             currentFilter = filter;
             
@@ -585,15 +799,28 @@ Created: ${new Date(ticket.createdAt).toLocaleString()}
 
         function refreshTickets() {
             console.log('Refreshing tickets...');
-            const btn = event.target;
-            const originalText = btn.textContent;
-            btn.textContent = '🔄 Refreshing...';
-            btn.disabled = true;
+            
+            // Handle case where function is called without an event (e.g., from reply success)
+            const btn = event && event.target ? event.target : document.querySelector('button[onclick="refreshTickets()"]');
+            let originalText = '';
+            
+            if (btn) {
+                originalText = btn.textContent;
+                btn.textContent = '🔄 Refreshing...';
+                btn.disabled = true;
+            }
 
+            // First test server connectivity
+            console.log('Testing server connectivity...');
+            
             // Fetch tickets from database
             fetch('/api/tickets?limit=20&sortBy=createdAt&sortOrder=desc')
-                .then(response => response.json())
+                .then(response => {
+                    console.log('Server response received:', response.status, response.ok);
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Tickets API response:', data);
                     if (data.success) {
                         // Update the tickets array
                         tickets = data.tickets;
@@ -611,12 +838,19 @@ Created: ${new Date(ticket.createdAt).toLocaleString()}
                     }
                 })
                 .catch(error => {
-                    console.error('Network error:', error);
-                    alert('Network error while refreshing tickets. Please check your connection.');
+                    console.error('Network error when fetching tickets:', error);
+                    console.error('Error details:', {
+                        name: error.name,
+                        message: error.message,
+                        stack: error.stack
+                    });
+                    alert('Network error while refreshing tickets. Server might not be running. Error: ' + error.message);
                 })
                 .finally(() => {
-                    btn.textContent = originalText;
-                    btn.disabled = false;
+                    if (btn) {
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                    }
                 });
         }
 
@@ -647,7 +881,10 @@ Created: ${new Date(ticket.createdAt).toLocaleString()}
                             <h4>${ticket.subject}</h4>
                             <small>Customer: ${ticket.customer ? ticket.customer.email : 'Unknown'} • ID: ${ticket.ticketId}</small>
                         </div>
-                        <span class="priority ${priorityClass}">${ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1)}</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="priority ${priorityClass}">${ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1)}</span>
+                            <button class="reply-button" onclick="openReplyModal('${ticket.id}'); event.stopPropagation();">Reply</button>
+                        </div>
                     </div>
                     <p>${ticket.description.length > 150 ? ticket.description.substring(0, 150) + '...' : ticket.description}</p>
                     <div class="customer-info">
@@ -707,9 +944,202 @@ Created: ${new Date(ticket.createdAt).toLocaleString()}
                 });
         }
 
-        function createTicket() {
-            alert('Opening new ticket creation form...');
+        // Reply Modal Functions
+        function openReplyModal(ticketId) {
+            console.log('Opening reply modal for ticket ID:', ticketId);
+            console.log('Available tickets:', tickets.map(t => ({ id: t.id, subject: t.subject })));
+            
+            const ticket = tickets.find(t => t.id === ticketId);
+            if (!ticket) {
+                console.error('Ticket not found in tickets array');
+                alert('Ticket not found');
+                return;
+            }
+
+            // Populate ticket details in modal
+            const ticketDetailsDiv = document.getElementById('modalTicketDetails');
+            ticketDetailsDiv.innerHTML = `
+                <h3>${ticket.subject}</h3>
+                <p><strong>Customer:</strong> ${ticket.customer ? `${ticket.customer.firstName} ${ticket.customer.lastName} (${ticket.customer.email})` : 'Unknown'}</p>
+                <p><strong>Ticket ID:</strong> ${ticket.ticketId}</p>
+                <p><strong>Priority:</strong> ${ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1)}</p>
+                <p><strong>Status:</strong> ${ticket.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                <p><strong>Description:</strong></p>
+                <p style="background: white; padding: 15px; border-radius: 5px; border-left: 4px solid #2c3e50;">${ticket.description}</p>
+            `;
+
+            // Set current ticket ID for form submission
+            document.getElementById('replyForm').dataset.ticketId = ticketId;
+            
+            // Set default status based on current status
+            const statusSelect = document.getElementById('ticketStatus');
+            if (ticket.status === 'open') {
+                statusSelect.value = 'in-progress';
+            } else {
+                statusSelect.value = ticket.status;
+            }
+
+            // Clear previous reply message
+            document.getElementById('replyMessage').value = '';
+
+            // Show modal
+            document.getElementById('replyModal').style.display = 'block';
         }
+
+        function closeReplyModal() {
+            document.getElementById('replyModal').style.display = 'none';
+            document.getElementById('replyForm').reset();
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('replyModal');
+            if (event.target == modal) {
+                closeReplyModal();
+            }
+        }
+
+        // Handle reply form submission
+        document.getElementById('replyForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const ticketId = this.dataset.ticketId;
+            const replyMessage = document.getElementById('replyMessage').value;
+            const newStatus = document.getElementById('ticketStatus').value;
+            
+            console.log('Submitting reply:', { ticketId, replyMessage: replyMessage.substring(0, 50) + '...', newStatus });
+            
+            if (!replyMessage.trim()) {
+                alert('Please enter a reply message');
+                return;
+            }
+
+            // First check if we're authenticated
+            try {
+                const authCheck = await fetch('/api/session/me');
+                const authResult = await authCheck.json();
+                console.log('Authentication check:', authResult);
+                
+                if (!authResult.success || authResult.userType !== 'agent') {
+                    alert('You are not authenticated as an agent. Please log in first.');
+                    window.location.href = '/support_agent';
+                    return;
+                }
+            } catch (authError) {
+                console.error('Authentication check failed:', authError);
+                alert('Cannot verify authentication. Please refresh the page and try again.');
+                return;
+            }
+
+            const submitButton = document.querySelector('.btn-reply');
+            const originalText = submitButton.textContent;
+            submitButton.textContent = 'Sending...';
+            submitButton.disabled = true;
+
+            try {
+                console.log('Sending request to:', `/api/tickets/${ticketId}/reply`);
+                console.log('Request payload:', { message: replyMessage.substring(0, 50) + '...', status: newStatus });
+                console.log('Current URL:', window.location.href);
+                console.log('Base URL:', window.location.origin);
+                
+                // Test server connectivity first
+                console.log('Testing server connectivity...');
+                try {
+                    const testResponse = await fetch('/api/session/me', { method: 'GET' });
+                    console.log('Server connectivity test:', testResponse.ok ? 'SUCCESS' : 'FAILED', testResponse.status);
+                } catch (testError) {
+                    console.error('Server connectivity test failed:', testError);
+                    throw new Error('Cannot connect to server. Please check if the server is running.');
+                }
+                
+                // Add timeout to the fetch request
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => {
+                    console.log('Request timeout triggered after 15 seconds');
+                    controller.abort();
+                }, 15000); // 15 second timeout (increased)
+                
+                console.log('Making reply request...');
+                const response = await fetch(`/api/tickets/${ticketId}/reply`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: replyMessage,
+                        status: newStatus
+                    }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+                console.log('Reply request completed');
+
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                console.log('Response headers:', [...response.headers.entries()]);
+                console.log('Response type:', response.type);
+                console.log('Response url:', response.url);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Response error text:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+                }
+
+                console.log('Parsing JSON response...');
+                const result = await response.json();
+                console.log('JSON parsed successfully');
+                
+                console.log('Reply response:', result);
+                
+                if (result.success) {
+                    alert('Reply sent successfully!');
+                    closeReplyModal();
+                    refreshTickets(); // Refresh the ticket list
+                    updateDashboardMetrics(); // Update metrics
+                } else {
+                    console.error('Reply error details:', result);
+                    alert('Error sending reply: ' + result.message + (result.debug ? '\nDebug: ' + JSON.stringify(result.debug) : ''));
+                }
+            } catch (error) {
+                console.error('Error sending reply:', error);
+                console.error('Full error object:', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack,
+                    cause: error.cause
+                });
+                
+                let errorMessage = 'Network error while sending reply. ';
+                
+                if (error.name === 'AbortError') {
+                    errorMessage = 'Request timed out after 15 seconds. The server may be busy. ';
+                    console.error('Request was aborted due to timeout');
+                } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    errorMessage = 'Cannot connect to server. Please check if the server is running. ';
+                    console.error('Network connection failed - server may be down');
+                } else if (error.message.includes('fetch')) {
+                    errorMessage = 'Network connection error. ';
+                    console.error('Fetch-related error:', error.message);
+                } else if (error.message.includes('HTTP error')) {
+                    errorMessage = `Server error: ${error.message}. `;
+                    console.error('HTTP response error:', error.message);
+                } else if (error.name === 'SyntaxError') {
+                    errorMessage = 'Server returned invalid response format. ';
+                    console.error('JSON parsing error - server may have returned HTML instead of JSON');
+                } else {
+                    console.error('Unexpected error type:', error.name, error.message);
+                }
+                
+                errorMessage += 'Please try again.';
+                console.error('Final error message:', errorMessage);
+                alert(errorMessage);
+            } finally {
+                submitButton.textContent = originalText;
+                submitButton.disabled = false;
+            }
+        });
 
         function viewReports() {
             alert('Opening reports dashboard...');

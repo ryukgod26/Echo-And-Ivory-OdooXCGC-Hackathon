@@ -87,14 +87,31 @@ const ticketSchema = new mongoose.Schema({
         isInternal: {
             type: Boolean,
             default: false
-        }
+        },
+        attachments: [{
+            filename: String,
+            originalName: String,
+            mimeType: String,
+            size: Number,
+            uploadDate: { type: Date, default: Date.now },
+            url: String
+        }]
     }],
     attachments: [{
         filename: String,
         originalName: String,
         mimeType: String,
         size: Number,
-        uploadDate: { type: Date, default: Date.now }
+        uploadDate: { type: Date, default: Date.now },
+        url: String,
+        uploadedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            refPath: 'attachments.uploadedByType'
+        },
+        uploadedByType: {
+            type: String,
+            enum: ['Customer', 'Agent']
+        }
     }],
     escalationLevel: {
         type: Number,
@@ -205,6 +222,5 @@ ticketSchema.index({ status: 1, priority: -1 });
 ticketSchema.index({ assignedAgent: 1, status: 1 });
 ticketSchema.index({ customer: 1, createdAt: -1 });
 ticketSchema.index({ category: 1, status: 1 });
-ticketSchema.index({ ticketId: 1 });
 
 module.exports = mongoose.model('Ticket', ticketSchema);

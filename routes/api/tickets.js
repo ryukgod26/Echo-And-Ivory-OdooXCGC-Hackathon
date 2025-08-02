@@ -1,8 +1,11 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const Ticket = require('../../models/Ticket');
 const Customer = require('../../models/Customer');
 const Agent = require('../../models/Agent');
+const { upload } = require('../../middleware/upload');
+
 
 // GET /api/tickets - Fetch all tickets with filtering options
 router.get('/', async (req, res) => {
@@ -128,8 +131,8 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// POST /api/tickets - Create new ticket
-router.post('/', async (req, res) => {
+// POST /api/tickets - Create new ticket with optional file attachments
+router.post('/', upload.array('attachments', 5), async (req, res) => {
     try {
         const {
             subject,
@@ -192,6 +195,21 @@ router.post('/', async (req, res) => {
             priority,
             category
         });
+
+        // Handle file attachments
+        if (req.files && req.files.length > 0) {
+            const attachments = req.files.map(file => ({
+                filename: file.filename,
+                originalName: file.originalname,
+                mimeType: file.mimetype,
+                size: file.size,
+                url: `/uploads/tickets/${file.filename}`,
+                uploadedBy: customer._id,
+                uploadedByType: 'Customer',
+                uploadDate: new Date()
+            }));
+            ticket.attachments = attachments;
+        }
 
         await ticket.save();
 
@@ -354,6 +372,122 @@ router.get('/stats/team', async (req, res) => {
             message: 'Error fetching team status',
             error: error.message
         });
+    }
+});
+
+// POST /api/tickets/:id/reply - Add reply to ticket and update status
+router.post('/:id/reply', async (req, res) => {
+    try {
+        const { message, status } = req.body;
+        const ticketId = req.params.id;
+
+        console.log('Reply request received:', { ticketId, message: message?.substring(0, 50) + '...', status });
+
+        // Validate ObjectId format
+        if (!mongoose.Types.ObjectId.isValid(ticketId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid ticket ID format'
+            });
+        }
+
+        if (!message || !message.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Reply message is required'
+            });
+        }
+
+        // Find the ticket
+        const ticket = await Ticket.findById(ticketId);
+        console.log('Ticket found:', ticket ? `ID: ${ticket._id}, Subject: ${ticket.subject}` : 'Not found');
+        
+        if (!ticket) {
+            return res.status(404).json({
+                success: false,
+                message: 'Ticket not found'
+            });
+        }
+
+        // Get agent info from session (assuming agent is logged in)
+        console.log('Session data:', req.session);
+        console.log('Session agent:', req.session.agent);
+        
+        const agentId = req.session.agent?.id;
+        console.log('Agent ID from session:', agentId);
+        
+        if (!agentId) {
+            return res.status(401).json({
+                success: false,
+                message: 'Agent not authenticated',
+                debug: {
+                    sessionExists: !!req.session,
+                    agentExists: !!req.session.agent,
+                    sessionData: req.session
+                }
+            });
+        }
+
+        const agent = await Agent.findById(agentId);
+        if (!agent) {
+            return res.status(401).json({
+                success: false,
+                message: 'Agent not found'
+            });
+        }
+
+        // Add interaction to ticket
+        const interaction = {
+            type: 'email', // Using email as the reply type
+            content: message.trim(),
+            author: agentId,
+            authorType: 'Agent',
+            timestamp: new Date(),
+            isInternal: false // This is a customer-facing reply
+        };
+
+        ticket.interactions.push(interaction);
+        
+        // Update ticket status if provided
+        if (status && ['open', 'in-progress', 'pending-customer', 'resolved', 'closed'].includes(status)) {
+            ticket.status = status;
+        }
+
+        // Assign agent to ticket if not already assigned
+        if (!ticket.assignedAgent) {
+            ticket.assignedAgent = agentId;
+        }
+
+        // Update lastUpdated timestamp
+        ticket.lastUpdated = new Date();
+
+        // Save the ticket
+        console.log('Saving ticket...');
+        await ticket.save();
+        console.log('Ticket saved successfully');
+
+        console.log('Sending response...');
+        
+        // Send a simplified response to avoid potential serialization issues
+        return res.json({
+            success: true,
+            message: 'Reply sent successfully',
+            ticketId: ticketId,
+            newStatus: ticket.status,
+            agentAssigned: !!ticket.assignedAgent
+        });
+
+    } catch (error) {
+        console.error('Error sending reply:', error);
+        
+        // Check if response was already sent
+        if (!res.headersSent) {
+            res.status(500).json({
+                success: false,
+                message: 'Error sending reply',
+                error: error.message
+            });
+        }
     }
 });
 
