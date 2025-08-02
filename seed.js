@@ -1,9 +1,116 @@
-const mongoose = require('mongoose');
 require('dotenv').config();
-
+const mongoose = require('mongoose');
 const Customer = require('./models/Customer');
 const Agent = require('./models/Agent');
 const Ticket = require('./models/Ticket');
+const User = require('./models/User');
+const Category = require('./models/Category');
+
+async function seedDatabase() {
+    try {
+        // Connect to MongoDB
+        await mongoose.connect(process.env.MONGO_URI_KEY);
+        console.log('Connected to MongoDB');
+
+        // Create default admin user
+        const adminExists = await User.findOne({ email: 'admin@company.com' });
+        if (!adminExists) {
+            const admin = User.createAdmin({
+                firstName: 'System',
+                lastName: 'Administrator',
+                email: 'admin@company.com',
+                password: 'admin123'
+            });
+            
+            await admin.save();
+            console.log('✅ Default admin user created');
+            console.log('   Email: admin@company.com');
+            console.log('   Password: admin123');
+        } else {
+            console.log('ℹ️  Admin user already exists');
+        }
+
+        // Create default categories
+        const defaultCategories = [
+            {
+                name: 'Technical Issue',
+                description: 'Problems with software, hardware, or technical functionality',
+                color: '#dc3545',
+                icon: 'fas fa-cog',
+                priority: 5
+            },
+            {
+                name: 'Billing',
+                description: 'Questions about invoices, payments, and billing issues',
+                color: '#28a745',
+                icon: 'fas fa-dollar-sign',
+                priority: 4
+            },
+            {
+                name: 'Account',
+                description: 'Account management, profile updates, and access issues',
+                color: '#007bff',
+                icon: 'fas fa-user',
+                priority: 3
+            },
+            {
+                name: 'General Inquiry',
+                description: 'General questions and information requests',
+                color: '#6c757d',
+                icon: 'fas fa-question-circle',
+                priority: 2
+            },
+            {
+                name: 'Feature Request',
+                description: 'Suggestions for new features or improvements',
+                color: '#17a2b8',
+                icon: 'fas fa-lightbulb',
+                priority: 1
+            },
+            {
+                name: 'Bug Report',
+                description: 'Reports of software bugs or unexpected behavior',
+                color: '#fd7e14',
+                icon: 'fas fa-bug',
+                priority: 4
+            }
+        ];
+
+        // Get admin user for creating categories
+        const admin = await User.findOne({ email: 'admin@company.com' });
+        
+        for (const categoryData of defaultCategories) {
+            const exists = await Category.findOne({ name: categoryData.name });
+            if (!exists) {
+                const category = new Category({
+                    ...categoryData,
+                    createdBy: admin._id
+                });
+                await category.save();
+                console.log(`✅ Created category: ${categoryData.name}`);
+            }
+        }
+
+        console.log('\n🎉 Database seeding completed successfully!');
+        
+        console.log('\n📋 Access Information:');
+        console.log('- Admin Portal: http://localhost:3000/admin');
+        console.log('- Agent Portal: http://localhost:3000/support_agent');
+        console.log('- Customer Portal: http://localhost:3000/customer');
+        console.log('- Unified Login: http://localhost:3000/auth/login');
+        
+        console.log('\n🔑 Default Admin Credentials:');
+        console.log('- Email: admin@company.com');
+        console.log('- Password: admin123');
+
+    } catch (error) {
+        console.error('❌ Error seeding database:', error);
+    } finally {
+        await mongoose.disconnect();
+        console.log('\nDisconnected from MongoDB');
+        process.exit(0);
+    }
+}
 
 // Sample data
 const sampleCustomers = [

@@ -18,12 +18,12 @@ const ticketSchema = new mongoose.Schema({
     },
     customer: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref: 'User', // Updated to use unified User model
         required: true
     },
     assignedAgent: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Agent',
+        ref: 'User', // Updated to use unified User model
         default: null
     },
     status: {
@@ -37,8 +37,8 @@ const ticketSchema = new mongoose.Schema({
         default: 'medium'
     },
     category: {
-        type: String,
-        enum: ['technical', 'billing', 'account', 'general', 'feature_request', 'bug_report'],
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category', // Updated to reference Category model
         required: true
     },
     tags: [{
@@ -135,7 +135,32 @@ const ticketSchema = new mongoose.Schema({
         totalResponseTime: Number, // in minutes
         customerWaitTime: Number,  // in minutes
         reopenCount: { type: Number, default: 0 }
-    }
+    },
+    // Voting system
+    upvotes: {
+        type: Number,
+        default: 0
+    },
+    downvotes: {
+        type: Number,
+        default: 0
+    },
+    votes: [{
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true
+        },
+        voteType: {
+            type: String,
+            enum: ['upvote', 'downvote'],
+            required: true
+        },
+        timestamp: {
+            type: Date,
+            default: Date.now
+        }
+    }]
 }, {
     timestamps: true
 });

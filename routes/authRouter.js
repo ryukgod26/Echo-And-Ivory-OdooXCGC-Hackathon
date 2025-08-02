@@ -2,6 +2,160 @@ const express = require('express');
 const router = express.Router();
 const Customer = require('../models/Customer');
 const Agent = require('../models/Agent');
+const User = require('../models/User'); // Add unified User model
+
+// Unified login route for all user types
+router.get('/login', (req, res) => {
+    if (req.session.user) {
+        // Redirect based on user role
+        switch (req.session.user.role) {
+            case 'admin':
+                return res.redirect('/admin');
+            case 'agent':
+                return res.redirect('/support_agent');
+            case 'customer':
+                return res.redirect('/customer');
+            default:
+                return res.redirect('/');
+        }
+    }
+    res.sendFile('login.html', { root: './views' });
+});
+
+// Unified login POST route
+router.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        
+        // Try to find user in unified User model first
+        let user = await User.findOne({ email: email.toLowerCase() });
+        
+        if (user) {
+            const isMatch = await user.comparePassword(password);
+            if (!isMatch) {
+                return res.json({ success: false, message: 'Invalid email or password' });
+            }
+            
+            // Update last login
+            user.lastLogin = new Date();
+            await user.save();
+            
+            // Create session
+            req.session.user = {
+                id: user._id,
+                name: user.name || user.fullName,
+                email: user.email,
+                role: user.role,
+                permissions: user.permissions
+            };
+            
+            // Redirect based on role
+            let redirectUrl = '/';
+            switch (user.role) {
+                case 'admin':
+                    redirectUrl = '/admin';
+                    break;
+                case 'agent':
+                    redirectUrl = '/support_agent';
+                    // Also set legacy agent session for backward compatibility
+                    req.session.agent = {
+                        id: user._id,
+                        name: user.name || user.fullName,
+                        email: user.email,
+                        employeeId: user.employeeId,
+                        department: user.department
+                    };
+                    break;
+                case 'customer':
+                    redirectUrl = '/customer';
+                    // Also set legacy customer session for backward compatibility
+                    req.session.customer = {
+                        id: user._id,
+                        name: user.name || user.fullName,
+                        email: user.email,
+                        phone: user.phone
+                    };
+                    break;
+            }
+            
+            return res.json({ success: true, message: 'Login successful', redirectUrl });
+        }
+        
+        // Fallback to legacy authentication for existing users
+        // Try Customer model
+        const customer = await Customer.findOne({ email: email.toLowerCase() });
+        if (customer) {
+            const isMatch = await customer.comparePassword(password);
+            if (!isMatch) {
+                return res.json({ success: false, message: 'Invalid email or password' });
+            }
+            
+            req.session.customer = {
+                id: customer._id,
+                name: `${customer.firstName} ${customer.lastName}`,
+                email: customer.email,
+                phone: customer.phone
+            };
+            
+            return res.json({ success: true, message: 'Login successful', redirectUrl: '/customer' });
+        }
+        
+        // Try Agent model
+        const agent = await Agent.findOne({ email: email.toLowerCase() });
+        if (agent && agent.status !== 'inactive') {
+            const isMatch = await agent.comparePassword(password);
+            if (!isMatch) {
+                return res.json({ success: false, message: 'Invalid email or password' });
+            }
+            
+            // Update agent status to online
+            await Agent.findByIdAndUpdate(agent._id, { 
+                status: 'online', 
+                lastActivity: new Date() 
+            });
+            
+            req.session.agent = {
+                id: agent._id,
+                name: `${agent.firstName} ${agent.lastName}`,
+                email: agent.email,
+                employeeId: agent.employeeId,
+                department: agent.department
+            };
+            
+            return res.json({ success: true, message: 'Login successful', redirectUrl: '/support_agent' });
+        }
+        
+        return res.json({ success: false, message: 'Invalid email or password' });
+        
+    } catch (error) {
+        console.error('Login error:', error);
+        res.json({ success: false, message: 'Server error. Please try again.' });
+    }
+});
+
+// Unified logout route
+router.post('/logout', async (req, res) => {
+    try {
+        // Update agent status if applicable
+        if (req.session.agent) {
+            await Agent.findByIdAndUpdate(req.session.agent.id, { 
+                status: 'offline',
+                lastActivity: new Date()
+            });
+        }
+        
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('Logout error:', err);
+                return res.json({ success: false, message: 'Error logging out' });
+            }
+            res.json({ success: true, message: 'Logged out successfully', redirectUrl: '/auth/login' });
+        });
+    } catch (error) {
+        console.error('Logout error:', error);
+        res.json({ success: false, message: 'Error logging out' });
+    }
+});
 
 // Middleware to check if user is authenticated
 const requireAuth = (userType) => {

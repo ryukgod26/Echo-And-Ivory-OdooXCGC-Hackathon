@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - Support Ticket System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 8px 8px 0 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border: none;
+            background: white;
+            color: #666;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+            flex: 1;
+            text-align: center;
+        }
+
+        .tab.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: #f8f9fa;
+        }
+
+        .tab-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: 500px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-header h2 {
+            font-size: 20px;
+            color: #333;
+        }
+
+        .search-filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .search-filters input,
+        .search-filters select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .role-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .role-admin {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .role-agent {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .role-customer {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .category-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #333;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-actions {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 1rem;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>Admin Portal</h1>
+            <div class="header-actions">
+                <span>Welcome, Admin</span>
+                <a href="/logout" class="btn btn-secondary">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('users')">User Management</button>
+            <button class="tab" onclick="showTab('categories')">Category Management</button>
+        </div>
+
+        <!-- User Management Tab -->
+        <div id="users-tab" class="tab-content">
+            <div class="section-header">
+                <h2>User Management</h2>
+                <button class="btn btn-primary" onclick="showCreateUserModal()">Create User</button>
+            </div>
+
+            <div class="search-filters">
+                <input type="text" id="userSearch" placeholder="Search users..." onkeyup="filterUsers()">
+                <select id="roleFilter" onchange="filterUsers()">
+                    <option value="">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="agent">Agent</option>
+                    <option value="customer">Customer</option>
+                </select>
+                <select id="statusFilter" onchange="filterUsers()">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+
+            <div class="table-container">
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr>
+                            <td colspan="6" class="loading">Loading users...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Category Management Tab -->
+        <div id="categories-tab" class="tab-content" style="display: none;">
+            <div class="section-header">
+                <h2>Category Management</h2>
+                <button class="btn btn-primary" onclick="showCreateCategoryModal()">Create Category</button>
+            </div>
+
+            <div class="search-filters">
+                <input type="text" id="categorySearch" placeholder="Search categories..." onkeyup="filterCategories()">
+                <select id="categoryStatusFilter" onchange="filterCategories()">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+
+            <div class="table-container">
+                <table id="categoriesTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Color</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Created By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="categoriesTableBody">
+                        <tr>
+                            <td colspan="7" class="loading">Loading categories...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="userModalTitle">Create User</h2>
+                <span class="close" onclick="closeUserModal()">&times;</span>
+            </div>
+            <form id="userForm">
+                <div class="modal-body">
+                    <input type="hidden" id="userId" name="userId">
+                    
+                    <div class="form-group">
+                        <label for="firstName">First Name:</label>
+                        <input type="text" id="firstName" name="firstName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lastName">Last Name:</label>
+                        <input type="text" id="lastName" name="lastName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="form-group" id="passwordGroup">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="role">Role:</label>
+                        <select id="role" name="role" required onchange="toggleRoleFields()">
+                            <option value="">Select Role</option>
+                            <option value="admin">Admin</option>
+                            <option value="agent">Agent</option>
+                            <option value="customer">Customer</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="employeeIdGroup" style="display: none;">
+                        <label for="employeeId">Employee ID:</label>
+                        <input type="text" id="employeeId" name="employeeId">
+                    </div>
+                    
+                    <div class="form-group" id="departmentGroup" style="display: none;">
+                        <label for="department">Department:</label>
+                        <input type="text" id="department" name="department">
+                    </div>
+                    
+                    <div class="form-group" id="phoneGroup" style="display: none;">
+                        <label for="phone">Phone:</label>
+                        <input type="text" id="phone" name="phone">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create/Edit Category Modal -->
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="categoryModalTitle">Create Category</h2>
+                <span class="close" onclick="closeCategoryModal()">&times;</span>
+            </div>
+            <form id="categoryForm">
+                <div class="modal-body">
+                    <input type="hidden" id="categoryId" name="categoryId">
+                    
+                    <div class="form-group">
+                        <label for="categoryName">Name:</label>
+                        <input type="text" id="categoryName" name="name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categoryDescription">Description:</label>
+                        <textarea id="categoryDescription" name="description"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categoryColor">Color:</label>
+                        <input type="color" id="categoryColor" name="color" value="#007bff">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categoryIcon">Icon (Font Awesome class):</label>
+                        <input type="text" id="categoryIcon" name="icon" placeholder="fas fa-tag">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categoryPriority">Priority:</label>
+                        <input type="number" id="categoryPriority" name="priority" value="0" min="0">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeCategoryModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let users = [];
+        let categories = [];
+        let currentTab = 'users';
+
+        // Tab Management
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.getElementById('users-tab').style.display = 'none';
+            document.getElementById('categories-tab').style.display = 'none';
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').style.display = 'block';
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            currentTab = tabName;
+            
+            // Load data for the selected tab
+            if (tabName === 'users') {
+                loadUsers();
+            } else if (tabName === 'categories') {
+                loadCategories();
+            }
+        }
+
+        // User Management Functions
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/admin/users');
+                const data = await response.json();
+                users = data.users;
+                renderUsers(users);
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.getElementById('usersTableBody').innerHTML = 
+                    '<tr><td colspan="6" class="empty-state">Error loading users</td></tr>';
+            }
+        }
+
+        function renderUsers(userList) {
+            const tbody = document.getElementById('usersTableBody');
+            
+            if (userList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No users found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = userList.map(user => `
+                <tr>
+                    <td>${user.firstName} ${user.lastName}</td>
+                    <td>${user.email}</td>
+                    <td><span class="role-badge role-${user.role}">${user.role.toUpperCase()}</span></td>
+                    <td><span class="status-badge status-${user.isActive ? 'active' : 'inactive'}">${user.isActive ? 'Active' : 'Inactive'}</span></td>
+                    <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                    <td class="actions">
+                        <button class="btn btn-sm btn-primary" onclick="editUser('${user._id}')">Edit</button>
+                        <button class="btn btn-sm btn-secondary" onclick="toggleUserStatus('${user._id}')">${user.isActive ? 'Deactivate' : 'Activate'}</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteUser('${user._id}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterUsers() {
+            const search = document.getElementById('userSearch').value.toLowerCase();
+            const roleFilter = document.getElementById('roleFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            const filtered = users.filter(user => {
+                const matchSearch = user.firstName.toLowerCase().includes(search) || 
+                                  user.lastName.toLowerCase().includes(search) || 
+                                  user.email.toLowerCase().includes(search);
+                const matchRole = !roleFilter || user.role === roleFilter;
+                const matchStatus = !statusFilter || 
+                                   (statusFilter === 'active' && user.isActive) || 
+                                   (statusFilter === 'inactive' && !user.isActive);
+                
+                return matchSearch && matchRole && matchStatus;
+            });
+            
+            renderUsers(filtered);
+        }
+
+        function showCreateUserModal() {
+            document.getElementById('userModalTitle').textContent = 'Create User';
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('passwordGroup').style.display = 'block';
+            document.getElementById('userModal').style.display = 'block';
+            toggleRoleFields();
+        }
+
+        function editUser(userId) {
+            const user = users.find(u => u._id === userId);
+            if (!user) return;
+            
+            document.getElementById('userModalTitle').textContent = 'Edit User';
+            document.getElementById('userId').value = user._id;
+            document.getElementById('firstName').value = user.firstName;
+            document.getElementById('lastName').value = user.lastName;
+            document.getElementById('email').value = user.email;
+            document.getElementById('role').value = user.role;
+            document.getElementById('employeeId').value = user.employeeId || '';
+            document.getElementById('department').value = user.department || '';
+            document.getElementById('phone').value = user.phone || '';
+            document.getElementById('passwordGroup').style.display = 'none';
+            
+            toggleRoleFields();
+            document.getElementById('userModal').style.display = 'block';
+        }
+
+        function toggleRoleFields() {
+            const role = document.getElementById('role').value;
+            const employeeIdGroup = document.getElementById('employeeIdGroup');
+            const departmentGroup = document.getElementById('departmentGroup');
+            const phoneGroup = document.getElementById('phoneGroup');
+            
+            if (role === 'agent' || role === 'admin') {
+                employeeIdGroup.style.display = 'block';
+                departmentGroup.style.display = 'block';
+                phoneGroup.style.display = 'block';
+            } else if (role === 'customer') {
+                employeeIdGroup.style.display = 'none';
+                departmentGroup.style.display = 'none';
+                phoneGroup.style.display = 'block';
+            } else {
+                employeeIdGroup.style.display = 'none';
+                departmentGroup.style.display = 'none';
+                phoneGroup.style.display = 'none';
+            }
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').style.display = 'none';
+        }
+
+        async function toggleUserStatus(userId) {
+            try {
+                const response = await fetch(`/api/admin/users/${userId}/toggle-status`, {
+                    method: 'PATCH'
+                });
+                
+                if (response.ok) {
+                    loadUsers();
+                } else {
+                    alert('Failed to update user status');
+                }
+            } catch (error) {
+                console.error('Error toggling user status:', error);
+                alert('Error updating user status');
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (!confirm('Are you sure you want to delete this user?')) return;
+            
+            try {
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadUsers();
+                } else {
+                    alert('Failed to delete user');
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert('Error deleting user');
+            }
+        }
+
+        // Category Management Functions
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/admin/categories');
+                const data = await response.json();
+                categories = data.categories;
+                renderCategories(categories);
+            } catch (error) {
+                console.error('Error loading categories:', error);
+                document.getElementById('categoriesTableBody').innerHTML = 
+                    '<tr><td colspan="7" class="empty-state">Error loading categories</td></tr>';
+            }
+        }
+
+        function renderCategories(categoryList) {
+            const tbody = document.getElementById('categoriesTableBody');
+            
+            if (categoryList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No categories found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = categoryList.map(category => `
+                <tr>
+                    <td>
+                        <span class="category-color" style="background-color: ${category.color}"></span>
+                        ${category.name}
+                    </td>
+                    <td>${category.description || '-'}</td>
+                    <td>${category.color}</td>
+                    <td>${category.priority}</td>
+                    <td><span class="status-badge status-${category.isActive ? 'active' : 'inactive'}">${category.isActive ? 'Active' : 'Inactive'}</span></td>
+                    <td>${category.createdBy ? `${category.createdBy.firstName} ${category.createdBy.lastName}` : '-'}</td>
+                    <td class="actions">
+                        <button class="btn btn-sm btn-primary" onclick="editCategory('${category._id}')">Edit</button>
+                        <button class="btn btn-sm btn-secondary" onclick="toggleCategoryStatus('${category._id}')">${category.isActive ? 'Deactivate' : 'Activate'}</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteCategory('${category._id}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterCategories() {
+            const search = document.getElementById('categorySearch').value.toLowerCase();
+            const statusFilter = document.getElementById('categoryStatusFilter').value;
+            
+            const filtered = categories.filter(category => {
+                const matchSearch = category.name.toLowerCase().includes(search) || 
+                                  (category.description && category.description.toLowerCase().includes(search));
+                const matchStatus = !statusFilter || 
+                                   (statusFilter === 'active' && category.isActive) || 
+                                   (statusFilter === 'inactive' && !category.isActive);
+                
+                return matchSearch && matchStatus;
+            });
+            
+            renderCategories(filtered);
+        }
+
+        function showCreateCategoryModal() {
+            document.getElementById('categoryModalTitle').textContent = 'Create Category';
+            document.getElementById('categoryForm').reset();
+            document.getElementById('categoryId').value = '';
+            document.getElementById('categoryColor').value = '#007bff';
+            document.getElementById('categoryModal').style.display = 'block';
+        }
+
+        function editCategory(categoryId) {
+            const category = categories.find(c => c._id === categoryId);
+            if (!category) return;
+            
+            document.getElementById('categoryModalTitle').textContent = 'Edit Category';
+            document.getElementById('categoryId').value = category._id;
+            document.getElementById('categoryName').value = category.name;
+            document.getElementById('categoryDescription').value = category.description || '';
+            document.getElementById('categoryColor').value = category.color;
+            document.getElementById('categoryIcon').value = category.icon || '';
+            document.getElementById('categoryPriority').value = category.priority;
+            
+            document.getElementById('categoryModal').style.display = 'block';
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('categoryModal').style.display = 'none';
+        }
+
+        async function toggleCategoryStatus(categoryId) {
+            try {
+                const response = await fetch(`/api/admin/categories/${categoryId}/toggle-status`, {
+                    method: 'PATCH'
+                });
+                
+                if (response.ok) {
+                    loadCategories();
+                } else {
+                    alert('Failed to update category status');
+                }
+            } catch (error) {
+                console.error('Error toggling category status:', error);
+                alert('Error updating category status');
+            }
+        }
+
+        async function deleteCategory(categoryId) {
+            if (!confirm('Are you sure you want to delete this category?')) return;
+            
+            try {
+                const response = await fetch(`/api/admin/categories/${categoryId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadCategories();
+                } else {
+                    alert('Failed to delete category');
+                }
+            } catch (error) {
+                console.error('Error deleting category:', error);
+                alert('Error deleting category');
+            }
+        }
+
+        // Form Submissions
+        document.getElementById('userForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const userData = Object.fromEntries(formData.entries());
+            const userId = userData.userId;
+            
+            try {
+                const url = userId ? `/api/admin/users/${userId}` : '/api/admin/users';
+                const method = userId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                if (response.ok) {
+                    closeUserModal();
+                    loadUsers();
+                } else {
+                    const error = await response.json();
+                    alert(error.error || 'Failed to save user');
+                }
+            } catch (error) {
+                console.error('Error saving user:', error);
+                alert('Error saving user');
+            }
+        });
+
+        document.getElementById('categoryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const categoryData = Object.fromEntries(formData.entries());
+            const categoryId = categoryData.categoryId;
+            
+            try {
+                const url = categoryId ? `/api/admin/categories/${categoryId}` : '/api/admin/categories';
+                const method = categoryId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(categoryData)
+                });
+                
+                if (response.ok) {
+                    closeCategoryModal();
+                    loadCategories();
+                } else {
+                    const error = await response.json();
+                    alert(error.error || 'Failed to save category');
+                }
+            } catch (error) {
+                console.error('Error saving category:', error);
+                alert('Error saving category');
+            }
+        });
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const userModal = document.getElementById('userModal');
+            const categoryModal = document.getElementById('categoryModal');
+            
+            if (event.target == userModal) {
+                closeUserModal();
+            }
+            if (event.target == categoryModal) {
+                closeCategoryModal();
+            }
+        }
+
+        // Load initial data
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUsers();
+        });
+    </script>
+</body>
+</html>

@@ -14,6 +14,7 @@ const agentRouter = require('./routes/agentRouter');
 const authRouter = require('./routes/authRouter');
 const ticketsAPI = require('./routes/api/tickets');
 const sessionAPI = require('./routes/api/session');
+const adminAPI = require('./routes/api/admin');
 
 dotenv.config();
 
@@ -49,9 +50,18 @@ app.use('/', homeRouter);
 app.use('/customer', authRouter.requireCustomerAuth, customerRouter);
 app.use('/support_agent', authRouter.requireAgentAuth, agentRouter);
 
+// Admin portal route
+app.get('/admin', (req, res) => {
+    if (!req.session.user || req.session.user.role !== 'admin') {
+        return res.redirect('/auth/login?message=Admin access required');
+    }
+    res.sendFile(path.join(__dirname, 'views', 'admin.html'));
+});
+
 // API routes
 app.use('/api/tickets', ticketsAPI);
 app.use('/api/session', sessionAPI);
+app.use('/api/admin', adminAPI);
 
  mongoose.connect(process.env.MONGO_URI_KEY,{
 
@@ -66,4 +76,5 @@ app.listen(port, () => {
     console.log(`- Home: http://localhost:${port}/home`);
     console.log(`- Customer: http://localhost:${port}/customer`);
     console.log(`- Support Agent: http://localhost:${port}/support_agent`);
+    console.log(`- Admin Portal: http://localhost:${port}/admin`);
 });

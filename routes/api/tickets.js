@@ -4,6 +4,7 @@ const router = express.Router();
 const Ticket = require('../../models/Ticket');
 const Customer = require('../../models/Customer');
 const Agent = require('../../models/Agent');
+const User = require('../../models/User');
 const { upload } = require('../../middleware/upload');
 
 
@@ -216,6 +217,25 @@ router.post('/', upload.array('attachments', 5), async (req, res) => {
         // Populate customer data for response
         await ticket.populate('customer', 'firstName lastName email');
 
+        // Send email notification to customer
+        const customerName = `${ticket.customer.firstName} ${ticket.customer.lastName}`;
+        await sendEmailNotification(
+            ticket.customer.email,
+            `Ticket Created: ${ticket.subject}`,
+            `Dear ${customerName},
+
+Your support ticket has been created successfully.
+
+Subject: ${ticket.subject}
+Priority: ${ticket.priority}
+Status: ${ticket.status}
+
+We will review your request and get back to you soon.
+
+Thank you for contacting our support team.`,
+            ticket.ticketId
+        );
+
         res.status(201).json({
             success: true,
             message: 'Ticket created successfully',
@@ -231,6 +251,7 @@ router.post('/', upload.array('attachments', 5), async (req, res) => {
                     name: `${ticket.customer.firstName} ${ticket.customer.lastName}`,
                     email: ticket.customer.email
                 },
+                attachments: ticket.attachments,
                 createdAt: ticket.createdAt
             }
         });
@@ -375,8 +396,8 @@ router.get('/stats/team', async (req, res) => {
     }
 });
 
-// POST /api/tickets/:id/reply - Add reply to ticket and update status
-router.post('/:id/reply', async (req, res) => {
+// POST /api/tickets/:id/reply - Add reply to ticket and update status with optional attachments
+router.post('/:id/reply', upload.array('attachments', 5), async (req, res) => {
     try {
         const { message, status } = req.body;
         const ticketId = req.params.id;
@@ -446,9 +467,23 @@ router.post('/:id/reply', async (req, res) => {
             isInternal: false // This is a customer-facing reply
         };
 
+        // Handle file attachments for the reply
+        if (req.files && req.files.length > 0) {
+            const attachments = req.files.map(file => ({
+                filename: file.filename,
+                originalName: file.originalname,
+                mimeType: file.mimetype,
+                size: file.size,
+                url: `/uploads/tickets/${file.filename}`,
+                uploadDate: new Date()
+            }));
+            interaction.attachments = attachments;
+        }
+
         ticket.interactions.push(interaction);
         
         // Update ticket status if provided
+        const oldStatus = ticket.status;
         if (status && ['open', 'in-progress', 'pending-customer', 'resolved', 'closed'].includes(status)) {
             ticket.status = status;
         }
@@ -465,6 +500,30 @@ router.post('/:id/reply', async (req, res) => {
         console.log('Saving ticket...');
         await ticket.save();
         console.log('Ticket saved successfully');
+
+        // Send email notification if status changed
+        if (oldStatus !== ticket.status) {
+            await ticket.populate('customer', 'firstName lastName email');
+            const customerName = `${ticket.customer.firstName} ${ticket.customer.lastName}`;
+            
+            await sendEmailNotification(
+                ticket.customer.email,
+                `Ticket Status Update: ${ticket.subject}`,
+                `Dear ${customerName},
+
+The status of your support ticket has been updated.
+
+Ticket: ${ticket.subject}
+Previous Status: ${oldStatus}
+New Status: ${ticket.status}
+Agent Reply: ${message}
+
+You can view the full conversation and reply to this ticket by logging into your account.
+
+Thank you for your patience.`,
+                ticket.ticketId
+            );
+        }
 
         console.log('Sending response...');
         
@@ -490,5 +549,329 @@ router.post('/:id/reply', async (req, res) => {
         }
     }
 });
+
+// POST /api/tickets/:id/customer-reply - Add customer reply to ticket with optional attachments
+router.post('/:id/customer-reply', upload.array('attachments', 5), async (req, res) => {
+    try {
+        const { message } = req.body;
+        const ticketId = req.params.id;
+
+        console.log('Customer reply request received:', { ticketId, message: message?.substring(0, 50) + '...' });
+
+        // Validate ObjectId format
+        if (!mongoose.Types.ObjectId.isValid(ticketId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid ticket ID format'
+            });
+        }
+
+        if (!message || !message.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Reply message is required'
+            });
+        }
+
+        // Find the ticket
+        const ticket = await Ticket.findById(ticketId);
+        console.log('Ticket found:', ticket ? `ID: ${ticket._id}, Subject: ${ticket.subject}` : 'Not found');
+        
+        if (!ticket) {
+            return res.status(404).json({
+                success: false,
+                message: 'Ticket not found'
+            });
+        }
+
+        // Get customer info from session
+        console.log('Session data:', req.session);
+        console.log('Session customer:', req.session.customer);
+        
+        const customerId = req.session.customer?.id;
+        console.log('Customer ID from session:', customerId);
+        
+        if (!customerId) {
+            return res.status(401).json({
+                success: false,
+                message: 'Customer not authenticated',
+                debug: {
+                    sessionExists: !!req.session,
+                    customerExists: !!req.session.customer,
+                    sessionData: req.session
+                }
+            });
+        }
+
+        // Verify the customer owns this ticket
+        if (ticket.customer.toString() !== customerId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied: You can only reply to your own tickets'
+            });
+        }
+
+        const customer = await Customer.findById(customerId);
+        if (!customer) {
+            return res.status(401).json({
+                success: false,
+                message: 'Customer not found'
+            });
+        }
+
+        // Add interaction to ticket
+        const interaction = {
+            type: 'email', // Using email as the reply type
+            content: message.trim(),
+            author: customerId,
+            authorType: 'Customer',
+            timestamp: new Date(),
+            isInternal: false
+        };
+
+        // Handle file attachments for the reply
+        if (req.files && req.files.length > 0) {
+            const attachments = req.files.map(file => ({
+                filename: file.filename,
+                originalName: file.originalname,
+                mimeType: file.mimetype,
+                size: file.size,
+                url: `/uploads/tickets/${file.filename}`,
+                uploadDate: new Date()
+            }));
+            interaction.attachments = attachments;
+        }
+
+        ticket.interactions.push(interaction);
+        
+        // Update ticket status to 'open' if customer replies (indicating they need further assistance)
+        if (ticket.status === 'pending-customer' || ticket.status === 'resolved') {
+            ticket.status = 'open';
+        }
+
+        // Update lastUpdated timestamp
+        ticket.lastUpdated = new Date();
+
+        // Save the ticket
+        console.log('Saving ticket...');
+        await ticket.save();
+        console.log('Ticket saved successfully');
+
+        console.log('Sending response...');
+        
+        // Send a simplified response
+        return res.json({
+            success: true,
+            message: 'Reply sent successfully',
+            ticketId: ticketId,
+            newStatus: ticket.status,
+            interactionCount: ticket.interactions.length
+        });
+
+    } catch (error) {
+        console.error('Error sending customer reply:', error);
+        
+        // Check if response was already sent
+        if (!res.headersSent) {
+            res.status(500).json({
+                success: false,
+                message: 'Error sending reply',
+                error: error.message
+            });
+        }
+    }
+});
+
+// Agent create ticket endpoint
+router.post('/agent/create', upload.array('attachments', 5), async (req, res) => {
+    try {        
+        const { customerEmail, subject, description, priority, category, assignToMe } = req.body;
+        
+        if (!customerEmail || !subject || !description) {
+            return res.status(400).json({ error: 'Customer email, subject, and description are required' });
+        }
+
+        // Check if customer exists, create if not
+        let customer = await User.findOne({ email: customerEmail });
+        if (!customer) {
+            // Create a basic customer account
+            customer = new User({
+                name: customerEmail.split('@')[0], // Use email prefix as default name
+                email: customerEmail,
+                role: 'customer'
+            });
+            await customer.save();
+        }
+
+        // Prepare attachments array
+        const attachments = [];
+        if (req.files && req.files.length > 0) {
+            req.files.forEach(file => {
+                attachments.push({
+                    filename: file.filename,
+                    originalName: file.originalname,
+                    size: file.size,
+                    mimetype: file.mimetype,
+                    uploadDate: new Date()
+                });
+            });
+        }
+
+        // Create the ticket
+        const ticket = new Ticket({
+            subject,
+            description,
+            priority: priority || 'medium',
+            category: category || 'general',
+            customer: customer._id,
+            attachments,
+            status: 'open',
+            assignedAgent: assignToMe === 'on' ? req.session.user.id : null
+        });
+
+        await ticket.save();
+        
+        // Populate customer info for response
+        await ticket.populate('customer', 'name email');
+        if (ticket.assignedAgent) {
+            await ticket.populate('assignedAgent', 'name email');
+        }
+
+        res.json({ 
+            success: true, 
+            message: 'Ticket created successfully',
+            ticket 
+        });
+
+    } catch (error) {
+        console.error('Error creating ticket:', error);
+        res.status(500).json({ error: 'Failed to create ticket' });
+    }
+});
+
+// Vote on ticket endpoint
+router.post('/:id/vote', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { voteType } = req.body;
+        
+        if (!req.session.user) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        if (!voteType || !['upvote', 'downvote'].includes(voteType)) {
+            return res.status(400).json({ error: 'Valid vote type (upvote/downvote) required' });
+        }
+        
+        const ticket = await Ticket.findById(id);
+        if (!ticket) {
+            return res.status(404).json({ error: 'Ticket not found' });
+        }
+        
+        const userId = req.session.user.id;
+        
+        // Check if user has already voted
+        const existingVoteIndex = ticket.votes.findIndex(vote => vote.user.toString() === userId);
+        
+        if (existingVoteIndex !== -1) {
+            const existingVote = ticket.votes[existingVoteIndex];
+            
+            if (existingVote.voteType === voteType) {
+                // User is trying to vote the same way again - remove the vote
+                ticket.votes.splice(existingVoteIndex, 1);
+                
+                if (voteType === 'upvote') {
+                    ticket.upvotes = Math.max(0, ticket.upvotes - 1);
+                } else {
+                    ticket.downvotes = Math.max(0, ticket.downvotes - 1);
+                }
+            } else {
+                // User is changing their vote
+                ticket.votes[existingVoteIndex].voteType = voteType;
+                ticket.votes[existingVoteIndex].timestamp = new Date();
+                
+                if (voteType === 'upvote') {
+                    ticket.upvotes += 1;
+                    ticket.downvotes = Math.max(0, ticket.downvotes - 1);
+                } else {
+                    ticket.downvotes += 1;
+                    ticket.upvotes = Math.max(0, ticket.upvotes - 1);
+                }
+            }
+        } else {
+            // New vote
+            ticket.votes.push({
+                user: userId,
+                voteType: voteType,
+                timestamp: new Date()
+            });
+            
+            if (voteType === 'upvote') {
+                ticket.upvotes += 1;
+            } else {
+                ticket.downvotes += 1;
+            }
+        }
+        
+        await ticket.save();
+        
+        // Prepare response with user vote info
+        const userVote = ticket.votes.find(vote => vote.user.toString() === userId);
+        const responseTicket = {
+            _id: ticket._id,
+            upvotes: ticket.upvotes,
+            downvotes: ticket.downvotes,
+            userVote: userVote ? userVote.voteType : null
+        };
+        
+        res.json({ 
+            success: true, 
+            message: 'Vote recorded successfully',
+            ticket: responseTicket
+        });
+        
+    } catch (error) {
+        console.error('Error voting on ticket:', error);
+        res.status(500).json({ error: 'Failed to record vote' });
+    }
+});
+
+// Email notification service using Web3Forms
+async function sendEmailNotification(to, subject, message, ticketId) {
+    try {
+        const emailData = {
+            access_key: 'b75155a8-aea9-4ebf-96de-5cf0475952b3',
+            to: to,
+            subject: subject,
+            message: `
+                ${message}
+                
+                Ticket ID: ${ticketId}
+                
+                You can view this ticket at: ${process.env.BASE_URL || 'http://localhost:3000'}
+                
+                ---
+                Support Ticket System
+            `
+        };
+        
+        const response = await fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(emailData)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            console.log('Email notification sent successfully to:', to);
+        } else {
+            console.error('Failed to send email notification:', result);
+        }
+    } catch (error) {
+        console.error('Error sending email notification:', error);
+    }
+}
 
 module.exports = router;

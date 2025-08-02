@@ -445,6 +445,99 @@
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
         }
 
+        /* File upload styles */
+        .form-group input[type="file"] {
+            padding: 8px;
+            border: 2px dashed #e1e1e1;
+            background: #f9f9f9;
+            cursor: pointer;
+        }
+
+        .form-group input[type="file"]:hover {
+            border-color: #2c3e50;
+            background: #f0f4ff;
+        }
+
+        .file-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f0f4ff;
+            border: 1px solid #2c3e50;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .file-item .remove-file {
+            margin-left: 8px;
+            cursor: pointer;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .file-item .remove-file:hover {
+            color: #c0392b;
+        }
+
+        /* Attachment display styles */
+        .attachments-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .attachment-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e1e1e1;
+        }
+
+        .attachment-item:last-child {
+            border-bottom: none;
+        }
+
+        .attachment-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .attachment-icon {
+            width: 20px;
+            height: 20px;
+            background: #2c3e50;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+
+        .download-btn {
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .download-btn:hover {
+            background: #34495e;
+        }
+
         @media (max-width: 1024px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -471,6 +564,114 @@
                 gap: 15px;
                 text-align: center;
             }
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .file-preview-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .remove-file-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .remove-file-btn:hover {
+            background: #c82333;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-cancel:hover {
+            background: #5a6268;
         }
     </style>
 </head>
@@ -521,29 +722,84 @@
             <div class="ticket-queue">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h3>Ticket Queue</h3>
-                    <button class="btn" onclick="refreshTickets()">🔄 Refresh</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn secondary" onclick="showCreateTicketModal()">+ Create Ticket</button>
+                        <button class="btn" onclick="refreshTickets()">🔄 Refresh</button>
+                    </div>
+                </div>
+                
+                <!-- Enhanced Filtering Section -->
+                <div class="ticket-filters" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: 500;">Search:</label>
+                            <input type="text" id="agentSearchQuery" placeholder="Search tickets..." onkeyup="applyFilters()" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: 500;">Status:</label>
+                            <select id="agentStatusFilter" onchange="applyFilters()" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="">All Status</option>
+                                <option value="open">Open</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="pending-customer">Pending</option>
+                                <option value="resolved">Resolved</option>
+                                <option value="closed">Closed</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: 500;">Priority:</label>
+                            <select id="agentPriorityFilter" onchange="applyFilters()" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="">All Priority</option>
+                                <option value="urgent">Urgent</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: 500;">Assignment:</label>
+                            <select id="agentAssignmentFilter" onchange="applyFilters()" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="">All Tickets</option>
+                                <option value="assigned-to-me">Assigned to Me</option>
+                                <option value="unassigned">Unassigned</option>
+                                <option value="others">Assigned to Others</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <label style="display: inline-block; margin-right: 10px; font-size: 12px; font-weight: 500;">Sort by:</label>
+                            <select id="agentSortBy" onchange="applyFilters()" style="padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="priority-desc">Priority (High to Low)</option>
+                                <option value="createdAt-desc">Most Recent</option>
+                                <option value="updatedAt-desc">Recently Modified</option>
+                                <option value="interactions-desc">Most Replied</option>
+                                <option value="status">Status</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button onclick="clearAgentFilters()" style="background: #6c757d; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                Clear Filters
+                            </button>
+                            <span id="ticketCount" style="font-size: 12px; color: #666;"></span>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="filter-tabs">
-                    <button class="filter-tab active" onclick="filterTickets('all')">All</button>
-                    <button class="filter-tab" onclick="filterTickets('urgent')">Urgent</button>
-                    <button class="filter-tab" onclick="filterTickets('high')">High Priority</button>
-                    <button class="filter-tab" onclick="filterTickets('unassigned')">Unassigned</button>
+                    <button class="filter-tab active" onclick="quickFilter('all')">All</button>
+                    <button class="filter-tab" onclick="quickFilter('urgent')">Urgent</button>
+                    <button class="filter-tab" onclick="quickFilter('high')">High Priority</button>
+                    <button class="filter-tab" onclick="quickFilter('unassigned')">Unassigned</button>
+                    <button class="filter-tab" onclick="quickFilter('my-tickets')">My Tickets</button>
                 </div>
 
                 <div id="ticket-list">
-                    <!-- Sample tickets -->
-                    <div class="ticket-item" onclick="selectTicket(1)">
-                        <div class="ticket-header">
-                            <div>
-                                <h4>Cannot access account after password reset</h4>
-                                <small>Customer: john.doe@email.com • ID: #T001</small>
-                            </div>
-                            <span class="priority urgent">Urgent</span>
-                        </div>
-                        <p>Customer is unable to log in after requesting a password reset. They have tried multiple times...</p>
-                        <div class="customer-info">
-                            <strong>Created:</strong> 45 minutes ago • <strong>Last Update:</strong> 30 minutes ago
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 10px;"></i>
+                        <p>Loading tickets...</p>
+                    </div>
+                </div>
                         </div>
                     </div>
 
@@ -643,10 +899,19 @@
                 <!-- Ticket details will be populated here -->
             </div>
             
-            <form id="replyForm">
+            <form id="replyForm" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="replyMessage">Your Reply:</label>
                     <textarea id="replyMessage" name="replyMessage" placeholder="Type your reply to the customer here..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="replyAttachments">Attachments (Optional):</label>
+                    <input type="file" id="replyAttachments" name="attachments" multiple accept="image/*,.pdf,.doc,.docx,.txt,.xlsx,.xls,.zip">
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        Supported files: Images, PDF, Word documents, Excel files, text files, and ZIP archives (Max 10MB each, up to 5 files)
+                    </small>
+                    <div id="reply-file-preview" style="margin-top: 10px;"></div>
                 </div>
                 
                 <div class="form-group">
@@ -662,6 +927,79 @@
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="closeReplyModal()">Cancel</button>
                     <button type="submit" class="btn-reply">Send Reply</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Ticket Modal -->
+    <div id="createTicketModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Ticket</h2>
+                <span class="close" onclick="closeCreateTicketModal()">&times;</span>
+            </div>
+            
+            <form id="createTicketForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="customerEmail">Customer Email:</label>
+                    <input type="email" id="customerEmail" name="customerEmail" placeholder="customer@example.com" required>
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        If customer doesn't exist, a basic account will be created
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ticketSubject">Subject:</label>
+                    <input type="text" id="ticketSubject" name="subject" placeholder="Brief description of the issue" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ticketPriority">Priority:</label>
+                    <select id="ticketPriority" name="priority" required>
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ticketCategory">Category:</label>
+                    <select id="ticketCategory" name="category" required>
+                        <option value="technical">Technical Issue</option>
+                        <option value="billing">Billing</option>
+                        <option value="account">Account</option>
+                        <option value="general">General Inquiry</option>
+                        <option value="feature_request">Feature Request</option>
+                        <option value="bug_report">Bug Report</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ticketDescription">Description:</label>
+                    <textarea id="ticketDescription" name="description" rows="5" placeholder="Detailed description of the issue or request" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="createTicketAttachments">Attachments (Optional):</label>
+                    <input type="file" id="createTicketAttachments" name="attachments" multiple accept="image/*,.pdf,.doc,.docx,.txt,.xlsx,.xls,.zip">
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        Supported files: Images, PDF, Word documents, Excel files, text files, and ZIP archives (Max 10MB each, up to 5 files)
+                    </small>
+                    <div id="create-ticket-file-preview" style="margin-top: 10px;"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="assignToMe" name="assignToMe" checked>
+                        <span>Assign this ticket to me</span>
+                    </label>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeCreateTicketModal()">Cancel</button>
+                    <button type="submit" class="btn-reply">Create Ticket</button>
                 </div>
             </form>
         </div>
@@ -875,6 +1213,27 @@ Created: ${new Date(ticket.createdAt).toLocaleString()}
                 const timeAgo = formatTimeAgo(new Date(ticket.createdAt));
                 const lastUpdate = formatTimeAgo(new Date(ticket.lastUpdated));
 
+                // Show attachments if any
+                let attachmentsHtml = '';
+                if (ticket.attachments && ticket.attachments.length > 0) {
+                    attachmentsHtml = `
+                        <div class="attachments-section" style="margin-top: 10px;">
+                            <strong>📎 ${ticket.attachments.length} attachment(s)</strong>
+                            ${ticket.attachments.map(attachment => `
+                                <div class="attachment-item">
+                                    <div class="attachment-info">
+                                        <div class="attachment-icon">${getFileIcon(attachment.mimeType)}</div>
+                                        <span>${attachment.originalName}</span>
+                                    </div>
+                                    <button class="download-btn" onclick="downloadFile('${attachment.url}', '${attachment.originalName}'); event.stopPropagation();">
+                                        Download
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
                 ticketElement.innerHTML = `
                     <div class="ticket-header">
                         <div>
@@ -891,6 +1250,7 @@ Created: ${new Date(ticket.createdAt).toLocaleString()}
                         <strong>Created:</strong> ${timeAgo} • <strong>Last Update:</strong> ${lastUpdate} • <strong>Status:</strong> ${statusText}
                         ${ticket.assignedAgent ? `• <strong>Agent:</strong> ${ticket.assignedAgent.name}` : '• <strong>Unassigned</strong>'}
                     </div>
+                    ${attachmentsHtml}
                 `;
 
                 ticketListContainer.appendChild(ticketElement);
@@ -989,13 +1349,152 @@ Created: ${new Date(ticket.createdAt).toLocaleString()}
         function closeReplyModal() {
             document.getElementById('replyModal').style.display = 'none';
             document.getElementById('replyForm').reset();
+            // Clear file preview
+            document.getElementById('reply-file-preview').innerHTML = '';
+            document.getElementById('replyAttachments').value = '';
         }
 
-        // Close modal when clicking outside
+        // Handle file input change for reply attachments
+        document.getElementById('replyAttachments').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const preview = document.getElementById('reply-file-preview');
+            preview.innerHTML = '';
+            
+            files.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <span>${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                    <span class="remove-file" onclick="removeReplyFile(${index})">&times;</span>
+                `;
+                preview.appendChild(fileItem);
+            });
+        });
+
+        function removeReplyFile(index) {
+            const fileInput = document.getElementById('replyAttachments');
+            const dt = new DataTransfer();
+            const files = Array.from(fileInput.files);
+            
+            files.forEach((file, i) => {
+                if (i !== index) {
+                    dt.items.add(file);
+                }
+            });
+            
+            fileInput.files = dt.files;
+            fileInput.dispatchEvent(new Event('change'));
+        }
+
+        function getFileIcon(mimeType) {
+            if (mimeType.startsWith('image/')) return '🖼️';
+            if (mimeType.includes('pdf')) return '📄';
+            if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
+            if (mimeType.includes('excel') || mimeType.includes('sheet')) return '📊';
+            if (mimeType.includes('zip')) return '📦';
+            return '📎';
+        }
+
+        function downloadFile(url, filename) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Create Ticket Modal Functions
+        function showCreateTicketModal() {
+            document.getElementById('createTicketModal').style.display = 'block';
+        }
+
+        function closeCreateTicketModal() {
+            document.getElementById('createTicketModal').style.display = 'none';
+            document.getElementById('createTicketForm').reset();
+            clearCreateTicketFilePreview();
+        }
+
+        function clearCreateTicketFilePreview() {
+            document.getElementById('create-ticket-file-preview').innerHTML = '';
+        }
+
+        // Handle file preview for create ticket
+        document.getElementById('createTicketAttachments').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const preview = document.getElementById('create-ticket-file-preview');
+            preview.innerHTML = '';
+
+            files.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-preview-item';
+                fileItem.innerHTML = `
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                    <button type="button" onclick="removeCreateTicketFile(${index})" class="remove-file-btn">×</button>
+                `;
+                preview.appendChild(fileItem);
+            });
+        });
+
+        function removeCreateTicketFile(index) {
+            const fileInput = document.getElementById('createTicketAttachments');
+            const dt = new DataTransfer();
+            const files = Array.from(fileInput.files);
+            
+            files.splice(index, 1);
+            files.forEach(file => dt.items.add(file));
+            fileInput.files = dt.files;
+            
+            // Trigger change event to update preview
+            fileInput.dispatchEvent(new Event('change'));
+        }
+
+        // Handle create ticket form submission
+        document.getElementById('createTicketForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Creating...';
+            submitBtn.disabled = true;
+
+            try {
+                const formData = new FormData(this);
+                
+                const response = await fetch('/api/tickets/agent/create', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('Ticket created successfully!');
+                    closeCreateTicketModal();
+                    loadTickets(); // Refresh the ticket list
+                } else {
+                    const error = await response.json();
+                    alert(`Error creating ticket: ${error.message || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error creating ticket:', error);
+                alert('Error creating ticket. Please try again.');
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Close modals when clicking outside
         window.onclick = function(event) {
-            const modal = document.getElementById('replyModal');
-            if (event.target == modal) {
+            const replyModal = document.getElementById('replyModal');
+            const createModal = document.getElementById('createTicketModal');
+            
+            if (event.target == replyModal) {
                 closeReplyModal();
+            }
+            if (event.target == createModal) {
+                closeCreateTicketModal();
             }
         }
 
@@ -1060,15 +1559,21 @@ Created: ${new Date(ticket.createdAt).toLocaleString()}
                 }, 15000); // 15 second timeout (increased)
                 
                 console.log('Making reply request...');
+                
+                // Create FormData for file upload
+                const formData = new FormData();
+                formData.append('message', replyMessage);
+                formData.append('status', newStatus);
+                
+                // Add files to FormData
+                const fileInput = document.getElementById('replyAttachments');
+                Array.from(fileInput.files).forEach(file => {
+                    formData.append('attachments', file);
+                });
+                
                 const response = await fetch(`/api/tickets/${ticketId}/reply`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        message: replyMessage,
-                        status: newStatus
-                    }),
+                    body: formData, // Don't set Content-Type header for multipart/form-data
                     signal: controller.signal
                 });
 
@@ -1094,7 +1599,11 @@ Created: ${new Date(ticket.createdAt).toLocaleString()}
                 console.log('Reply response:', result);
                 
                 if (result.success) {
-                    alert('Reply sent successfully!');
+                    let successMessage = 'Reply sent successfully!';
+                    if (fileInput.files.length > 0) {
+                        successMessage += ` ${fileInput.files.length} file(s) attached.`;
+                    }
+                    alert(successMessage);
                     closeReplyModal();
                     refreshTickets(); // Refresh the ticket list
                     updateDashboardMetrics(); // Update metrics
