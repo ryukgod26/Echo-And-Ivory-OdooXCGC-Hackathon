@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo and Ivory - Home</title>
+    <link rel="stylesheet" href="/stylesheets/index.css">
+</head>
+<body>
+
+    <header>
+        <div class="header-container">
+            <h1 class="logo">Echo and Ivory</h1>
+            <nav>
+                <a href="/" class="nav-link">Home</a>
+                <a href="/customer" class="nav-link">Customer Portal</a>
+                <a href="/support_agent" class="nav-link">Agent Portal</a>
+                <a href="#" class="btn btn-login">Login</a>
+                <a href="#" class="btn btn-signup">Sign Up</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <h2>Welcome to Echo and Ivory Support System</h2>
+            <p>Your comprehensive solution for customer support and ticket management</p>
+        </section>
+        
+        <section class="features">
+            <div class="feature-card">
+                <h3>Customer Portal</h3>
+                <p>Submit tickets, track progress, and get support</p>
+                <a href="/customer" class="btn btn-primary">Access Portal</a>
+            </div>
+            <div class="feature-card">
+                <h3>Agent Dashboard</h3>
+                <p>Manage tickets, respond to customers, and track metrics</p>
+                <a href="/support_agent" class="btn btn-primary">Agent Login</a>
+            </div>
+        </section>
+        
+        <section class="recent-tickets">
+            <h2>Recent Tickets</h2>
+            <div id="ticket-list" class="ticket-container">
+                <!-- Tickets will be loaded here -->
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Echo and Ivory. All rights reserved.</p>
+    </footer>
+
+    <script src="/javascripts/index.js"></script>
+
+</body>
+</html>
