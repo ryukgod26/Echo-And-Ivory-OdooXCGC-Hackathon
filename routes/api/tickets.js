@@ -312,6 +312,120 @@ router.put('/:id/assign', async (req, res) => {
     }
 });
 
+// POST /api/tickets/:id/assign - Enhanced assignment with actions
+router.post('/:id/assign', async (req, res) => {
+    try {
+        const { action, agentId } = req.body;
+
+        const ticket = await Ticket.findById(req.params.id);
+        if (!ticket) {
+            return res.status(404).json({
+                success: false,
+                message: 'Ticket not found'
+            });
+        }
+
+        let targetAgentId = agentId;
+
+        // Handle assign-to-me action
+        if (action === 'assign-to-me') {
+            // Get current agent from session
+            if (req.session && req.session.user && req.session.user.role === 'agent') {
+                targetAgentId = req.session.user.id;
+            } else {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Must be logged in as an agent to assign to yourself'
+                });
+            }
+        }
+
+        if (!targetAgentId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Agent ID is required'
+            });
+        }
+
+        // Find agent (could be from User or Agent model depending on implementation)
+        let agent = await User.findById(targetAgentId);
+        if (!agent || agent.role !== 'agent') {
+            agent = await Agent.findById(targetAgentId);
+            if (!agent) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Agent not found'
+                });
+            }
+        }
+
+        // Update ticket assignment
+        ticket.assignedAgent = targetAgentId;
+        if (ticket.status === 'open') {
+            ticket.status = 'in-progress';
+        }
+        await ticket.save();
+
+        // Populate the assigned agent for response
+        await ticket.populate('assignedAgent', 'firstName lastName email role');
+
+        res.json({
+            success: true,
+            message: 'Ticket assigned successfully',
+            ticket
+        });
+
+    } catch (error) {
+        console.error('Error assigning ticket:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error assigning ticket',
+            error: error.message
+        });
+    }
+});
+
+// POST /api/tickets/:id/status - Update ticket status
+router.post('/:id/status', async (req, res) => {
+    try {
+        const { status } = req.body;
+
+        if (!['open', 'in-progress', 'resolved', 'closed'].includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid status'
+            });
+        }
+
+        const ticket = await Ticket.findById(req.params.id);
+        if (!ticket) {
+            return res.status(404).json({
+                success: false,
+                message: 'Ticket not found'
+            });
+        }
+
+        ticket.status = status;
+        await ticket.save();
+
+        await ticket.populate(['customer', 'assignedAgent', 'category']);
+
+        res.json({
+            success: true,
+            message: 'Ticket status updated successfully',
+            ticket
+        });
+
+    } catch (error) {
+        console.error('Error updating ticket status:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating ticket status',
+            error: error.message
+        });
+    }
+});
+
 // GET /api/tickets/stats/dashboard - Get dashboard statistics
 router.get('/stats/dashboard', async (req, res) => {
     try {
